@@ -31,10 +31,8 @@ def healthcheck(request):
 def inference(request):
     try:
         model_inputs = response.json.loads(request.json)
-        
     except:
         model_inputs = request.json
-        im_b64 = request.json['image']
     
     im_b64 = model_inputs['image']
     img_bytes = base64.b64decode(im_b64.encode('utf-8'))
