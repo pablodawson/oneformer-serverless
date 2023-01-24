@@ -31,14 +31,12 @@ def healthcheck(request):
 def inference(request):
     try:
         model_inputs = response.json.loads(request.json)
-        im_b64 = response.json.loads(request.json)['image']
+        
     except:
         model_inputs = request.json
         im_b64 = request.json['image']
-
     
-    print(request.json)
-
+    im_b64 = model_inputs['image']
     img_bytes = base64.b64decode(im_b64.encode('utf-8'))
 
     output = user_src.inference(model_inputs, img_bytes)
