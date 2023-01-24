@@ -10,13 +10,10 @@ RUN apt-get update && apt-get install -y git
 RUN pip3 install --upgrade pip
 ADD requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
-
+RUN pip3 install natten -f https://shi-labs.com/natten/wheels/cu113/torch1.11/index.html 
 # We add the banana boilerplate here
 ADD server.py .
 EXPOSE 8000
-
-# Add your huggingface auth key here
-ENV HF_AUTH_TOKEN=your_token
 
 # Add your model weight files 
 # (in this case we have a python script)

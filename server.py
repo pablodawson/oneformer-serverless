@@ -6,6 +6,7 @@
 from sanic import Sanic, response
 import subprocess
 import app as user_src
+import base64
 
 # We do the model load-to-GPU step on server startup
 # so the model object is available globally for reuse
@@ -30,10 +31,14 @@ def healthcheck(request):
 def inference(request):
     try:
         model_inputs = response.json.loads(request.json)
+        
     except:
         model_inputs = request.json
 
-    output = user_src.inference(model_inputs)
+    im_b64 = request.json['image']
+    img_bytes = base64.b64decode(im_b64.encode('utf-8'))
+
+    output = user_src.inference(model_inputs, img_bytes)
 
     return response.json(output)
 

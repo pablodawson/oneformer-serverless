@@ -1,45 +1,53 @@
 import torch
 from torch import autocast
-from diffusers import StableDiffusionPipeline, LMSDiscreteScheduler
 import base64
 from io import BytesIO
-import os
-
+from transformers import OneFormerProcessor, OneFormerForUniversalSegmentation
+from PIL import Image
+import numpy as np
 # Init is ran on server startup
 # Load your model to GPU as a global variable here using the variable name "model"
 def init():
     global model
-    HF_AUTH_TOKEN = os.getenv("HF_AUTH_TOKEN")
-    
-    # this will substitute the default PNDM scheduler for K-LMS  
-    lms = LMSDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear")
+    global processor
 
-    model = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4", scheduler=lms, use_auth_token=HF_AUTH_TOKEN).to("cuda")
+    models = ["shi-labs/oneformer_ade20k_swin_tiny", "shi-labs/oneformer_ade20k_dinat_large"]
+
+    processor = OneFormerProcessor.from_pretrained(models[1])
+    model = OneFormerForUniversalSegmentation.from_pretrained(models[1])
 
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.
-def inference(model_inputs:dict) -> dict:
+def inference(model_inputs:dict, img_bytes) -> dict:
     global model
 
     # Parse out your arguments
-    prompt = model_inputs.get('prompt', None)
-    height = model_inputs.get('height', 512)
-    width = model_inputs.get('width', 512)
-    num_inference_steps = model_inputs.get('num_inference_steps', 50)
-    guidance_scale = model_inputs.get('guidance_scale', 7.5)
-    input_seed = model_inputs.get("seed",None)
-    
+    # Get file from request 
+
+    task = model_inputs.get("task", "semantic")
+    #model = model_inputs.get("model", "shi-labs/oneformer_ade20k_swin_tiny")
+    input_img = Image.open(BytesIO(img_bytes))
+
     #If "seed" is not sent, we won't specify a seed in the call
-    generator = None
-    if input_seed != None:
-        generator = torch.Generator("cuda").manual_seed(input_seed)
+    if img_bytes == None:
+        return {'message': "No image provided"}
     
-    if prompt == None:
-        return {'message': "No prompt provided"}
+    if task == None:
+        return {'message': "No task provided"}
     
     # Run the model
     with autocast("cuda"):
-        image = model(prompt,height=height,width=width,num_inference_steps=num_inference_steps,guidance_scale=guidance_scale,generator=generator)["sample"][0]
+        inputs = processor(input_img, ["semantic"], return_tensors="pt")
+        with torch.no_grad():
+            outputs = model(**inputs)
+        
+        class_queries_logits = outputs.class_queries_logits
+        masks_queries_logits = outputs.masks_queries_logits
+
+        predicted_semantic_map = processor.post_process_semantic_segmentation(
+        outputs, target_sizes=[input_img.size[::-1]])[0]
+        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
+        image = Image.fromarray(predicted_semantic_map_np)
     
     buffered = BytesIO()
     image.save(buffered,format="JPEG")
