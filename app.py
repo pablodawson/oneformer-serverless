@@ -18,8 +18,8 @@ def init():
 
     models = ["shi-labs/oneformer_ade20k_swin_tiny", "shi-labs/oneformer_ade20k_dinat_large"]
     timestart = time.time()
-    processor = OneFormerProcessor.from_pretrained(models[1])
-    model = OneFormerForUniversalSegmentation.from_pretrained(models[1]).to(device)
+    processor = OneFormerProcessor.from_pretrained(models[0])
+    model = OneFormerForUniversalSegmentation.from_pretrained(models[0]).to(device)
     print("Model loaded in: ", time.time() - timestart)
 
 # Inference is ran for every server call
