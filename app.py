@@ -6,6 +6,8 @@ from transformers import OneFormerProcessor, OneFormerForUniversalSegmentation
 from PIL import Image
 import numpy as np
 import time
+from utils import create_shadows
+
 # Init is ran on server startup
 # Load your model to GPU as a global variable here using the variable name "model"
 def init():
