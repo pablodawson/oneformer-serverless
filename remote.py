@@ -14,7 +14,7 @@ im_b64 = base64.b64encode(im_bytes).decode("utf8")
 api_key = "b6b9bb42-7432-4a66-8a3f-90f9f4b69c38"
 model_key = "de69cd53-7ddf-45c2-b202-bdcd00124ada"
 
-dictionary = {"image": im_b64, "task": "semantic"}
+dictionary = {"image": im_b64, "task": "semantic", "mode": "overlay"}
 timestart = time.time()
 
 out = banana.run(api_key, model_key, dictionary)

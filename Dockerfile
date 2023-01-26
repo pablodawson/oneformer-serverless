@@ -1,5 +1,6 @@
 # Must use a Cuda version 11+
 FROM pytorch/pytorch:1.11.0-cuda11.3-cudnn8-runtime
+ENV	 DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /
 
@@ -10,9 +11,15 @@ RUN apt-get update && apt-get install -y git
 RUN pip3 install --upgrade pip
 ADD requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
-RUN pip3 install natten -f https://shi-labs.com/natten/wheels/cu113/torch1.11/index.html 
+RUN pip3 install natten -f https://shi-labs.com/natten/wheels/cu113/torch1.11/index.html
+
+#OpenCV
+RUN apt-get install python3-opencv -y
+
 # We add the banana boilerplate here
 ADD server.py .
+ADD utils.py .
+
 EXPOSE 8000
 
 # Add your model weight files 

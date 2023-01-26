@@ -7,8 +7,6 @@ import os
 def download_model():
     # do a dry run of loading the huggingface model, which will download weights at build time
     #Set auth token which is required to download stable diffusion model weights
-    HF_AUTH_TOKEN = os.getenv("HF_AUTH_TOKEN")
-
     models = ["shi-labs/oneformer_ade20k_swin_tiny", "shi-labs/oneformer_ade20k_dinat_large"]
     processor = OneFormerProcessor.from_pretrained(models[1])
     model = OneFormerForUniversalSegmentation.from_pretrained(models[1])
