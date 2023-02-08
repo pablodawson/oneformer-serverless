@@ -7,7 +7,7 @@ from io import BytesIO
 from PIL import Image
 import json
 
-image_path = "input/room.jpg"
+image_path = "input/room3.jpg"
 
 def save_img(byte_string, i):
     image_encoded = byte_string.encode('utf-8')
@@ -17,13 +17,16 @@ def save_img(byte_string, i):
 
 with open(image_path, "rb") as f:
     im_bytes = f.read()        
-im_b64 = base64.b64encode(im_bytes).decode("utf8")
+im_b64 = base64.b64encode(im_bytes).decode("utf8") #base64
 
-payload = json.dumps({"image": im_b64, "task": "semantic"})
+payload = json.dumps({"image": im_b64, "task": "semantic", "vanishing_method": 2})
 
 res = requests.post('http://localhost:8000/', data = payload)
 
 save_img(res.json()["image_base64"], "seg_")
 save_img(res.json()["overlay_base64"], "overlay_")
+
+print(res.json()["pitch"])
+print(res.json()["yaw"])
 
 #https://stackoverflow.com/questions/29104107/upload-image-using-post-form-data-in-python-requests

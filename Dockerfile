@@ -19,6 +19,7 @@ RUN apt-get install python3-opencv -y
 # We add the banana boilerplate here
 ADD server.py .
 ADD utils.py .
+ADD vanishing_point_detection.py .
 
 EXPOSE 8000
 

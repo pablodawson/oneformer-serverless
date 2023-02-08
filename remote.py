@@ -7,6 +7,12 @@ import time
 
 image_path = "input/room3.jpg"
 
+def save_img(byte_string, i):
+    image_encoded = byte_string.encode('utf-8')
+    image_bytes = BytesIO(base64.b64decode(image_encoded))
+    image = Image.open(image_bytes)
+    image.save(i+"output.png")
+
 with open(image_path, "rb") as f:
     im_bytes = f.read()        
 im_b64 = base64.b64encode(im_bytes).decode("utf8")
@@ -21,8 +27,5 @@ out = banana.run(api_key, model_key, dictionary)
 
 print("Time taken: ", time.time() - timestart)
 
-image_byte_string = out["modelOutputs"][0]["image_base64"]
-image_encoded = image_byte_string.encode('utf-8')
-image_bytes = BytesIO(base64.b64decode(image_encoded))
-image = Image.open(image_bytes)
-image.save("outputweb.jpg")
+save_img(out["modelOutputs"][0]["image_base64"], "remote_seg_")
+save_img(out["modelOutputs"][0]["overlay_base64"], "remote_overlay_")
