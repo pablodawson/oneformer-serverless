@@ -99,18 +99,17 @@ def get_angle(image, method=1, angle='radians'):
         best_hypothesis_1, best_hypothesis_2, best_hypothesis_3 = vpd.vps_2D
         
     hypothesis_list = [best_hypothesis_1, best_hypothesis_2, best_hypothesis_3]
+    hypothesis = []
 
-    invalid = []
     for i, h in enumerate(hypothesis_list):
-        print(h)
-        if h[1]>image.shape[1] or h[1]<-image.shape[1]*4:
-            invalid.append(i)
-            #print("Eliminada la hipotesis " + str(i+1))
+        
+        if h[1]>image.shape[1] or h[1]<-image.shape[1]*5:
+            print("Eliminada la hipotesis " + str(i+1))
+        else:
+            print("Hipotesis " + str(i+1) + " aceptada")
+            hypothesis.append(h)
 
-    for i in invalid:
-        del hypothesis_list[i]
-
-    if len(hypothesis_list) <= 0:
+    if len(hypothesis) <= 0:
         print("Ningun VP lo suficientemente bueno.")
         hypothesis = [np.array([image.shape[0]/2, image.shape[1]/2,1])]
     
@@ -118,7 +117,7 @@ def get_angle(image, method=1, angle='radians'):
     height = image.shape[0]
 
     fov_vertical = 40 # Poner el FOV vertical en grados
-    fov_horizontal = 57.2
+    fov_horizontal = fov_vertical*width/height #57.2
 
     fy = np.divide(height/2, np.tan(np.radians(fov_vertical/2)))
     fx = np.divide(width/2, np.tan(np.radians(fov_horizontal/2)))
@@ -126,8 +125,8 @@ def get_angle(image, method=1, angle='radians'):
     K = np.array([[fx, 0.0, width/2], [0.0, fy, height/2], [0.0, 0.0, 1.0]])
 
     i=0
-    angleX, angleY = get_py_from_vp(hypothesis_list[i][0],hypothesis_list[i][1],K)
-    print([hypothesis_list[i][0]/image.shape[1], hypothesis_list[i][1]/image.shape[0], 1])
+    angleX, angleY = get_py_from_vp(hypothesis[i][0],hypothesis[i][1],K)
+    print([hypothesis[i][0]/image.shape[1], hypothesis[i][1]/image.shape[0], 1])
 
     if angle=='radians':
         return np.deg2rad(angleX), np.deg2rad(-angleY)
