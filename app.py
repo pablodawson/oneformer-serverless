@@ -68,8 +68,8 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         return {'image_base64': image_base64}
 
     else:
-        #overlay = create_overlay(np.array(input_img), predicted_semantic_map_np,floor_id=3, shadow_strength= float(shadow_strength))
-        overlay = create_visualizer(predicted_semantic_map_np)
+        overlay = create_overlay(np.array(input_img), predicted_semantic_map_np,floor_id=3, shadow_strength= float(shadow_strength))
+        #overlay = create_visualizer(predicted_semantic_map_np)
         buffered = BytesIO()
         overlay.save(buffered,format="PNG", optimize=True, quality=50)
 
