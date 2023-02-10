@@ -84,12 +84,11 @@ def get_py_from_vp(u_i, v_i, K):
     yaw = -np.arctan2(r3[0], r3[2])
     pitch = np.arcsin(r3[1])    
     return np.rad2deg(pitch), np.rad2deg(yaw)
-
-def get_angle(image, method=1, angle='radians'):
+def find_vp(image, method):
     if method==1:
         _, best_hypothesis_1, best_hypothesis_2, best_hypothesis_3, _, _ = get_vanishing_point(image, threshold=4)
     else: 
-        length_thresh = 15 # Minimum length of the line in pixels
+        length_thresh = 40 # Minimum length of the line in pixels
         principal_point = (image.shape[1]//2, image.shape[0]//2)
         focal_length = 1500 # Specify focal length in pixels
         seed = None
@@ -97,27 +96,44 @@ def get_angle(image, method=1, angle='radians'):
         vpd = VPDetection(length_thresh, principal_point, focal_length, seed)
         vps = vpd.find_vps(image)
         best_hypothesis_1, best_hypothesis_2, best_hypothesis_3 = vpd.vps_2D
-        
+    
     hypothesis_list = [best_hypothesis_1, best_hypothesis_2, best_hypothesis_3]
     hypothesis = []
 
     for i, h in enumerate(hypothesis_list):
-        
         if h[1]>image.shape[1] or h[1]<-image.shape[1]*5:
             print("Eliminada la hipotesis " + str(i+1))
         else:
-            print("Hipotesis " + str(i+1) + " aceptada")
+            print("Agregado"+ str(h))
             hypothesis.append(h)
 
+    return hypothesis
+
+def get_angle(image, method=1, angle='radians'):
+
+    default = False
+
+    method = int(method)
+
+    hypothesis =  find_vp(image, method)
+
     if len(hypothesis) <= 0:
-        print("Ningun VP lo suficientemente bueno.")
-        hypothesis = [np.array([image.shape[0]/2, image.shape[1]/2,1])]
+        print("Ningun VP lo suficientemente bueno. Probando otro metodo.")
+        if method ==1:
+            hypothesis = find_vp(image, method=2)
+        else: 
+            hypothesis = find_vp(image, method=1)
+
+        if len(hypothesis) <= 0:
+            print("Ningun VP con ambos metodos. Devolviendo valor por defecto.")
+            hypothesis = [[image.shape[1]/2, image.shape[0]/2]]
+            default = True
     
     width = image.shape[1]
     height = image.shape[0]
 
     fov_vertical = 40 # Poner el FOV vertical en grados
-    fov_horizontal = fov_vertical*width/height #57.2
+    fov_horizontal = fov_vertical*width/height
 
     fy = np.divide(height/2, np.tan(np.radians(fov_vertical/2)))
     fx = np.divide(width/2, np.tan(np.radians(fov_horizontal/2)))
@@ -127,11 +143,17 @@ def get_angle(image, method=1, angle='radians'):
     i=0
     angleX, angleY = get_py_from_vp(hypothesis[i][0],hypothesis[i][1],K)
     print([hypothesis[i][0]/image.shape[1], hypothesis[i][1]/image.shape[0], 1])
-
+    
     if angle=='radians':
-        return np.deg2rad(angleX), np.deg2rad(-angleY)
+        if default:
+            return 0.1570,0
+        else:
+            return np.deg2rad(angleX), np.deg2rad(-angleY)
     else:
-        return angleX, -angleY
+        if default:
+            return 9,0
+        else:
+            return angleX, -angleY
 
 if __name__ == "__main__":
     pass
