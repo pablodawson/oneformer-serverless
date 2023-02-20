@@ -6,3 +6,4 @@ lu_vp_detect
 opencv-python
 matplotlib
 ipdb
+simple_lama_inpainting

@@ -86,7 +86,7 @@ def get_py_from_vp(u_i, v_i, K):
     return np.rad2deg(pitch), np.rad2deg(yaw)
 def find_vp(image, method):
     if method==1:
-        _, best_hypothesis_1, best_hypothesis_2, best_hypothesis_3, _, _ = get_vanishing_point(image, threshold=4)
+        _, best_hypothesis_1, best_hypothesis_2, best_hypothesis_3, _, _ = get_vanishing_point(image, threshold=4, line_len=14, sigma=3)
     else: 
         length_thresh = 40 # Minimum length of the line in pixels
         principal_point = (image.shape[1]//2, image.shape[0]//2)
