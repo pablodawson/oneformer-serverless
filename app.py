@@ -41,7 +41,10 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
 
     if img_bytes == None:
         return {'message': "No image provided"}
-        
+    
+    if (input_img.format=="PNG"):
+        input_img = input_img.convert("RGB")
+
     # Run the model
     inputs = processor(input_img, [task], return_tensors="pt").to(device)
     with torch.no_grad():
