@@ -7,7 +7,7 @@ from io import BytesIO
 from PIL import Image
 import json
 
-image_path = "input/room3.jpg"
+image_path = "input/bedroom.png"
 
 def save_img(byte_string, i):
     image_encoded = byte_string.encode('utf-8')
