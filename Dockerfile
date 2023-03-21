@@ -15,7 +15,7 @@ RUN pip3 install --upgrade pip
 ADD requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 RUN pip3 install lu_vp_detect --no-dependencies
-RUN pip3 install natten -f https://shi-labs.com/natten/wheels/cu113/torch1.11/index.html
+RUN pip3 install natten==0.14.4 -f https://shi-labs.com/natten/wheels/cu113/torch1.11/index.html
 
 # We add the banana boilerplate here
 ADD server.py .
