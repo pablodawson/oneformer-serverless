@@ -7,14 +7,14 @@ WORKDIR /
 # Install git
 RUN apt-get update && apt-get install -y git
 
+#OpenCV
+RUN apt-get install python3-opencv -y
+
 # Install python packages
 RUN pip3 install --upgrade pip
 ADD requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 RUN pip3 install natten -f https://shi-labs.com/natten/wheels/cu113/torch1.11/index.html
-
-#OpenCV
-RUN apt-get install python3-opencv -y
 
 # We add the banana boilerplate here
 ADD server.py .

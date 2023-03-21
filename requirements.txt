@@ -1,8 +1,7 @@
 sanic==22.6.2
-transformers
+transformers==4.26.1
 scipy
 scikit-image
-lu_vp_detect
 opencv-python
 matplotlib
 ipdb

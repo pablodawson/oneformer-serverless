@@ -3,6 +3,7 @@
 
 from transformers import OneFormerProcessor, OneFormerForUniversalSegmentation
 import os
+import torch
 
 def download_model():
     # do a dry run of loading the huggingface model, which will download weights at build time

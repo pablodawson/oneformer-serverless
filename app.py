@@ -11,7 +11,6 @@ def init():
     global model
     global processor
     global device
-    global transform
 
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -20,7 +19,7 @@ def init():
     timestart = time.time()
     processor = OneFormerProcessor.from_pretrained(models[1])
     model = OneFormerForUniversalSegmentation.from_pretrained(models[1]).to(device)
-    print("Segmentation model loaded in: ", time.time() - timestart)
+    print("Segmentation model loaded in: ", time.time() - timestart)    
 
 
 # Inference is ran for every server call
@@ -50,14 +49,22 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     with torch.no_grad():
         outputs = model(**inputs)
 
-    predicted_semantic_map = processor.post_process_semantic_segmentation(
-    outputs, target_sizes=[input_img.size[::-1]])[0]
-    predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
-    
-    seg = labels_only(predicted_semantic_map_np)
+    if task == "semantic":
+        predicted_semantic_map = processor.post_process_semantic_segmentation(
+        outputs, target_sizes=[input_img.size[::-1]])[0]
+        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
+        seg = labels_only(predicted_semantic_map_np)
+        #segmentations = get_wall_instances(np.array(input_img), np.array(seg), debug=True)
 
-    if (debug):
-        seg.save("labelsSeg.png")
+        if (debug):
+            seg.save("labelsSeg.png")
+
+    elif task == "panoptic":
+        output = processor.post_process_panoptic_segmentation(outputs, target_sizes=[input_img.size[::-1]])
+        predicted_semantic_map, info = output[0]["segmentation"], output[0]["segments_info"]
+
+        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)        
+        cv2.imwrite("labelsPan.png", predicted_semantic_map_np)
 
     buffered = BytesIO()
     seg.save(buffered,format="PNG", optimize=True, quality=50)
@@ -86,7 +93,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         angles = get_angle(np.array(input_img), method=vanishing_method, angle='radians')
 
         if (debug):
-            print("Angles: ", angles)
+           print("Angles: ", angles)
 
         return {'image_base64': image_base64, 'overlay_base64': overlay_base64, 'pitch': angles[0], 'yaw': angles[1]}
 
