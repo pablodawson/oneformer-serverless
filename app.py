@@ -6,6 +6,8 @@ from PIL import Image
 import numpy as np
 import time
 from utils import *
+import os
+os.environ["SAFETENSORS_FAST_GPU"] = "1"
 
 def init():
     global model
@@ -96,9 +98,3 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
            print("Angles: ", angles)
 
         return {'image_base64': image_base64, 'overlay_base64': overlay_base64, 'pitch': angles[0], 'yaw': angles[1]}
-
-if __name__ == "__main__":
-    init()
-    with open("input/deluxe.jpg", "rb") as f:
-        img_bytes = f.read()
-    inference({"task": "semantic", "mode": "overlay"}, img_bytes, debug=True)
