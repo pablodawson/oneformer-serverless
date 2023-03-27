@@ -38,7 +38,6 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     mode = model_inputs.get("mode", "overlay")
     shadow_strength = model_inputs.get("shadow_strength", "1")
     vanishing_method = model_inputs.get("vanishing_method", "2")
-    input_resolution = model_inputs.get("input_resolution", 768)
 
     input_img = Image.open(BytesIO(img_bytes))
 
@@ -47,10 +46,6 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     
     if (input_img.format=="PNG"):
         input_img = input_img.convert("RGB")
-
-    # Resize manteniendo aspect ratio. Permite correr el modelo con resolución mas baja.
-    resize_size = (input_resolution, int(input_resolution * input_img.size[1] / input_img.size[0]))
-    resized_img = input_img.resize(resize_size, Image.ANTIALIAS)
 
     # Run the model
     inputs = processor(resized_img, [task], return_tensors="pt").to(device)
