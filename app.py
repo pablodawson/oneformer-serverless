@@ -7,6 +7,7 @@ import numpy as np
 import time
 from utils import *
 import os
+
 os.environ["SAFETENSORS_FAST_GPU"] = "1"
 
 def init():
@@ -37,6 +38,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     mode = model_inputs.get("mode", "overlay")
     shadow_strength = model_inputs.get("shadow_strength", "1")
     vanishing_method = model_inputs.get("vanishing_method", "2")
+    input_resolution = model_inputs.get("input_resolution", 768)
 
     input_img = Image.open(BytesIO(img_bytes))
 
@@ -46,14 +48,18 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     if (input_img.format=="PNG"):
         input_img = input_img.convert("RGB")
 
+    # Resize manteniendo aspect ratio. Permite correr el modelo con resolución mas baja.
+    resize_size = (input_resolution, int(input_resolution * input_img.size[1] / input_img.size[0]))
+    resized_img = input_img.resize(resize_size, Image.ANTIALIAS)
+
     # Run the model
-    inputs = processor(input_img, [task], return_tensors="pt").to(device)
+    inputs = processor(resized_img, [task], return_tensors="pt").to(device)
     with torch.no_grad():
         outputs = model(**inputs)
 
     if task == "semantic":
         predicted_semantic_map = processor.post_process_semantic_segmentation(
-        outputs, target_sizes=[input_img.size[::-1]])[0]
+        outputs, target_sizes=[resized_img.size[::-1]])[0]
         predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
         seg = labels_only(predicted_semantic_map_np)
         #segmentations = get_wall_instances(np.array(input_img), np.array(seg), debug=True)
@@ -65,8 +71,10 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         output = processor.post_process_panoptic_segmentation(outputs, target_sizes=[input_img.size[::-1]])
         predicted_semantic_map, info = output[0]["segmentation"], output[0]["segments_info"]
 
-        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)        
-        cv2.imwrite("labelsPan.png", predicted_semantic_map_np)
+        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
+
+        if debug:    
+            cv2.imwrite("labelsPan.png", predicted_semantic_map_np)
 
     buffered = BytesIO()
     seg.save(buffered,format="PNG", optimize=True, quality=50)
