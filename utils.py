@@ -84,6 +84,7 @@ def get_py_from_vp(u_i, v_i, K):
     yaw = -np.arctan2(r3[0], r3[2])
     pitch = np.arcsin(r3[1])    
     return np.rad2deg(pitch), np.rad2deg(yaw)
+
 def find_vp(image, method):
     if method==1:
         _, best_hypothesis_1, best_hypothesis_2, best_hypothesis_3, _, _ = get_vanishing_point(image, threshold=4, line_len=14, sigma=3)
@@ -155,5 +156,70 @@ def get_angle(image, method=1, angle='radians'):
         else:
             return angleX, -angleY
 
+def draw_lines(lines, image):
+    # Draw the detected lines on a copy of the original image
+    copy = np.copy(image)
+    for i in range(len(lines)):
+        for x1,y1,x2,y2 in lines[i]:
+            cv2.line(copy, (x1,y1), (x2,y2), (0,255,0),2)
+    return copy
+
+def get_wall_instances(image, wall_segmentation, canny_tres_1=50, canny_tres_2=100, hough_angle_tres=3, hough_tres=120,debug=False):
+
+    if (image.shape != wall_segmentation.shape):
+        wall_segmentation= cv2.resize(wall_segmentation, (image.shape[1], image.shape[0]))
+        wall_segmentation = wall_segmentation[:,:,:3]
+    
+    wall_only = np.zeros_like(image)
+    wall_only[wall_segmentation == 255] = image[wall_segmentation == 255]
+
+    wall_only = cv2.cvtColor(wall_only, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(wall_only, canny_tres_1, canny_tres_2)
+
+    lines = cv2.HoughLinesP(edges, hough_angle_tres, np.pi/2, hough_tres, minLineLength=20, maxLineGap=0)
+
+    if (debug):
+        cv2.imwrite('lines.png', draw_lines(lines, image))
+        cv2.imwrite('edges.png', edges)
+    
+    limits = []
+
+    for line in lines:
+        x1, x2 = line[0][0], line[0][2]
+        y1, y2 = line[0][1], line[0][3]
+        if (x1 == x2 and np.abs(y2-y1) > 20):
+            limits.append(x1)
+
+    #sort lines by x coordinate
+    
+    limits.sort()
+    for i in range(len(limits)-3):
+        if (i!=0):
+            if (limits[i] - limits[i-1] < 20):
+                limits.pop(i)
+
+    limits.insert(0,0)
+    limits.append(image.shape[1])
+
+    segmentations = []
+
+    
+    for i in range(len(limits) - 1):
+        start = limits[i]
+        end = limits[i+1]
+
+        seg = np.zeros_like(wall_segmentation)
+        
+        seg[:, start:end] = wall_segmentation[:, start:end]
+        
+        if (debug):
+            cv2.imwrite('seg_output_'+str(i)+'.png', seg)
+        
+        segmentations.append(seg)
+    
+    return segmentations
+
 if __name__ == "__main__":
-    pass
+    img = cv2.imread('input/bedroom.png')
+    wallseg = cv2.imread('seg_output.png')
+    get_wall_instances(img, wallseg, debug=True)
