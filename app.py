@@ -7,6 +7,7 @@ import numpy as np
 import time
 from utils import *
 import os
+
 os.environ["SAFETENSORS_FAST_GPU"] = "1"
 
 def init():
@@ -46,7 +47,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         input_img = input_img.convert("RGB")
 
     # Run the model
-    inputs = processor(input_img, [task], return_tensors="pt").to(device)
+    inputs = processor(resized_img, [task], return_tensors="pt").to(device)
     with torch.no_grad():
         outputs = model(**inputs)
 
@@ -55,7 +56,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     timestart = time.time()
     if task == "semantic":
         predicted_semantic_map = processor.post_process_semantic_segmentation(
-        outputs, target_sizes=[input_img.size[::-1]])[0]
+        outputs, target_sizes=[resized_img.size[::-1]])[0]
         predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
         seg = labels_only(predicted_semantic_map_np)
         #segmentations = get_wall_instances(np.array(input_img), np.array(seg), debug=True)
@@ -67,8 +68,10 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         output = processor.post_process_panoptic_segmentation(outputs, target_sizes=[input_img.size[::-1]])
         predicted_semantic_map, info = output[0]["segmentation"], output[0]["segments_info"]
 
-        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)        
-        cv2.imwrite("labelsPan.png", predicted_semantic_map_np)
+        predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
+
+        if debug:    
+            cv2.imwrite("labelsPan.png", predicted_semantic_map_np)
 
     
 
