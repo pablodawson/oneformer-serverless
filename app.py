@@ -20,7 +20,7 @@ def init():
     # Modelo segmentation
     models = ["shi-labs/oneformer_ade20k_swin_tiny", "shi-labs/oneformer_ade20k_dinat_large"]
     timestart = time.time()
-    processor = OneFormerProcessor.from_pretrained(models[0])
+    processor = OneFormerProcessor.from_pretrained(models[1])
     model = OneFormerForUniversalSegmentation.from_pretrained("models/").to(device)
     print("Segmentation model loaded in: ", time.time() - timestart)
 
