@@ -19,10 +19,9 @@ def init():
     # Modelo segmentation
     models = ["shi-labs/oneformer_ade20k_swin_tiny", "shi-labs/oneformer_ade20k_dinat_large"]
     timestart = time.time()
-    processor = OneFormerProcessor.from_pretrained(models[1])
-    model = OneFormerForUniversalSegmentation.from_pretrained(models[1]).to(device)
-    print("Segmentation model loaded in: ", time.time() - timestart)    
-
+    processor = OneFormerProcessor.from_pretrained(models[0])
+    model = OneFormerForUniversalSegmentation.from_pretrained("models/").to(device)
+    print("Segmentation model loaded in: ", time.time() - timestart)
 
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.
@@ -36,7 +35,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     task = model_inputs.get("task", "semantic")
     mode = model_inputs.get("mode", "overlay")
     shadow_strength = model_inputs.get("shadow_strength", "1")
-    vanishing_method = model_inputs.get("vanishing_method", "2")
+    vanishing_method = model_inputs.get("vanishing_method", "1")
 
     input_img = Image.open(BytesIO(img_bytes))
 
@@ -51,6 +50,9 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     with torch.no_grad():
         outputs = model(**inputs)
 
+    print("Model time: ", time.time() - timestart)
+
+    timestart = time.time()
     if task == "semantic":
         predicted_semantic_map = processor.post_process_semantic_segmentation(
         outputs, target_sizes=[input_img.size[::-1]])[0]
@@ -60,7 +62,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
 
         if (debug):
             seg.save("labelsSeg.png")
-
+        
     elif task == "panoptic":
         output = processor.post_process_panoptic_segmentation(outputs, target_sizes=[input_img.size[::-1]])
         predicted_semantic_map, info = output[0]["segmentation"], output[0]["segments_info"]
@@ -68,12 +70,16 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)        
         cv2.imwrite("labelsPan.png", predicted_semantic_map_np)
 
+    
+
     buffered = BytesIO()
     seg.save(buffered,format="PNG", optimize=True, quality=50)
 
     image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-    print("Inference time: ", time.time() - timestart)
+    print("Output processing time: ", time.time() - timestart)
+
+    
 
     # Return the results as a dictionary
     if mode=="segmentation":
@@ -91,10 +97,15 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
             visual.save("visual.png", "PNG")
 
         overlay_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-
+        timestart = time.time()
         angles = get_angle(np.array(input_img), method=vanishing_method, angle='radians')
-
+        print("Angles time: ", time.time() - timestart)
         if (debug):
            print("Angles: ", angles)
 
         return {'image_base64': image_base64, 'overlay_base64': overlay_base64, 'pitch': angles[0], 'yaw': angles[1]}
+
+if __name__=="__main__":
+    init()
+    image = open("input/room.jpg", "rb").read()
+    inference({"task": "semantic", "mode": "overlay"}, image, debug=True)

@@ -26,6 +26,7 @@ EXPOSE 8000
 
 # Add your model weight files 
 # (in this case we have a python script)
+RUN mkdir -p /models
 ADD download.py .
 RUN python3 download.py
 
