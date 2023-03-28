@@ -47,7 +47,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
         input_img = input_img.convert("RGB")
 
     # Run the model
-    inputs = processor(resized_img, [task], return_tensors="pt").to(device)
+    inputs = processor(input_img, [task], return_tensors="pt").to(device)
     with torch.no_grad():
         outputs = model(**inputs)
 
@@ -56,7 +56,7 @@ def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
     timestart = time.time()
     if task == "semantic":
         predicted_semantic_map = processor.post_process_semantic_segmentation(
-        outputs, target_sizes=[resized_img.size[::-1]])[0]
+        outputs, target_sizes=[input_img.size[::-1]])[0]
         predicted_semantic_map_np = predicted_semantic_map.cpu().numpy().astype(np.uint8)
         seg = labels_only(predicted_semantic_map_np)
         #segmentations = get_wall_instances(np.array(input_img), np.array(seg), debug=True)
