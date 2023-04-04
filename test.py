@@ -19,7 +19,7 @@ with open(image_path, "rb") as f:
     im_bytes = f.read()        
 im_b64 = base64.b64encode(im_bytes).decode("utf8") #base64
 
-payload = json.dumps({"image": im_b64, "task": "semantic", "vanishing_method": 2})
+payload = json.dumps({"image": im_b64, "task": "semantic", "vanishing_method": 1})
 
 res = requests.post('http://localhost:8000/', data = payload)
 
