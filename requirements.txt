@@ -7,3 +7,4 @@ matplotlib
 ipdb
 simple_lama_inpainting
 safetensors
+websockets==10.0
