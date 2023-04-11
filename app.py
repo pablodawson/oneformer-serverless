@@ -7,6 +7,7 @@ import numpy as np
 import time
 from utils import *
 import os
+import base64
 
 os.environ["SAFETENSORS_FAST_GPU"] = "1"
 
@@ -27,12 +28,16 @@ def init():
 # Inference is ran for every server call
 # Reference your preloaded global model variable here.
 
-def inference(model_inputs:dict, img_bytes, debug = False) -> dict:
+def inference(model_inputs:dict, debug = False) -> dict:
+
     global model
     # Parse out your arguments
     # Get file from request 
     timestart = time.time()
 
+    im_b64 = model_inputs['image']
+    img_bytes = base64.b64decode(im_b64.encode('utf-8'))
+    
     task = model_inputs.get("task", "semantic")
     mode = model_inputs.get("mode", "overlay")
     shadow_strength = model_inputs.get("shadow_strength", "1")
